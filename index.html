@@ -69,13 +69,13 @@
 
         .header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
             background: linear-gradient(145deg, 
                 rgba(245, 245, 220, 0.15) 0%,
                 rgba(31, 58, 58, 0.8) 100%
             );
             border-radius: 20px;
-            padding: 40px;
+            padding: 30px;
             box-shadow: 0 15px 40px var(--shadow-soft);
             border: 2px solid var(--golden-orange);
             position: relative;
@@ -85,7 +85,7 @@
         .header h1 {
             font-size: 2.8em;
             color: var(--warm-gold);
-            margin: 25px 0 15px 0;
+            margin: 20px 0 15px 0;
             font-weight: 700;
             text-shadow: 2px 2px 8px rgba(218, 165, 32, 0.3);
             font-family: 'KaiTi', '楷体', serif;
@@ -96,6 +96,20 @@
             color: var(--moon-white);
             font-style: italic;
             font-family: 'KaiTi', '楷体', serif;
+            margin-bottom: 25px;
+        }
+
+        /* 提升開始按鈕位置 */
+        .start-button-section {
+            text-align: center;
+            margin: 25px 0;
+            padding: 20px;
+            background: linear-gradient(145deg, 
+                rgba(210, 105, 30, 0.1) 0%,
+                rgba(31, 58, 58, 0.8) 100%
+            );
+            border-radius: 15px;
+            border: 2px solid var(--warm-gold);
         }
 
         .card {
@@ -365,6 +379,12 @@
             );
         }
 
+        .btn.large {
+            font-size: 1.3em;
+            padding: 18px 40px;
+            border-radius: 15px;
+        }
+
         .result-container {
             display: none;
             text-align: center;
@@ -569,6 +589,14 @@
         <div class="header fade-in">
             <h1>測性而識人 審德以定行</h1>
             <p class="subtitle">知人者智，自知者明</p>
+            
+            <!-- 提升開始按鈕位置 -->
+            <div class="start-button-section">
+                <p style="margin-bottom: 15px; color: var(--moon-white); font-family: 'KaiTi', serif;">
+                    「問心觀性明真我 察行審志識本源」
+                </p>
+                <button id="startBtn" class="btn large pulse" onclick="startTest()">開始測評</button>
+            </div>
         </div>
 
         <!-- 开始画面 -->
@@ -581,24 +609,26 @@
             <div class="dimensions">
                 <div class="dimension">
                     <h3>動靜之道</h3>
+                    <p>外向與內向傾向</p>
                 </div>
                 <div class="dimension">
                     <h3>虛實之辨</h3>
+                    <p>感知與直覺偏好</p>
                 </div>
                 <div class="dimension">
                     <h3>情理之衡</h3>
+                    <p>思考與情感權衡</p>
                 </div>
                 <div class="dimension">
                     <h3>順變之策</h3>
+                    <p>判斷與感知態度</p>
                 </div>
             </div>
 
             <p style="margin: 30px 0; font-size: 1.1em; color: var(--moon-white); font-family: 'KaiTi', serif;">
-                請根據真實情況選擇最符合您的選項。無對錯之分。<br>
-               
+                請根據真實情況選擇最符合您的選項，無對錯之分。<br>
+                測評約需 5-8 分鐘，共 24 道題目。
             </p>
-
-            <button class="btn pulse" onclick="startTest()">開始測評</button>
         </div>
 
         <!-- 测评进行中 -->
@@ -635,73 +665,78 @@
         const ANIMATION_DURATION = 300;
         const DEBOUNCE_DELAY = 150;
         
-        // 测评数据 - 压缩格式
+        // 使用 Map 提高查找性能
+        const dimensionNames = new Map([
+            ['energy', '動靜之道'],
+            ['sensing', '虛實之辨'],
+            ['thinking', '情理之衡'],
+            ['judging', '順變之策']
+        ]);
+
+        // 测评数据 - 优化后的格式
         const questions = [
             // 动静之道 (1-6)
-            {id: 1, category: 'energy', question: '在工作會議中，您更傾向於：', options: {A: '積極發言，與大家分享想法和觀點', B: '仔細聆聽，深思熟慮後再發表意見'}},
-            {id: 2, category: 'energy', question: '週末休息時，您更喜歡：', options: {A: '約朋友聚會、逛街或參加活動', B: '在家讀書、思考或享受獨處時光'}},
-            {id: 3, category: 'energy', question: '面對新環境時，您通常：', options: {A: '主動認識新朋友，快速融入群體', B: '觀察環境，慢慢適應後再與人交往'}},
-            {id: 4, category: 'energy', question: '獲得靈感和動力的方式：', options: {A: '與他人討論交流，在互動中激發創意', B: '獨自思考，在安靜中整理思緒'}},
-            {id: 5, category: 'energy', question: '處理壓力時，您偏好：', options: {A: '找人傾訴，通過交流釋放壓力', B: '獨處反思，通過內省解決問題'}},
-            {id: 6, category: 'energy', question: '學習新技能時，您更願意：', options: {A: '參加團體課程，與同學互動學習', B: '自學或一對一指導，按自己節奏進展'}},
+            {id: 1, category: 'energy', question: '在工作會議中，您更傾向於：', options: ['積極發言，與大家分享想法和觀點', '仔細聆聽，深思熟慮後再發表意見']},
+            {id: 2, category: 'energy', question: '週末休息時，您更喜歡：', options: ['約朋友聚會、逛街或參加活動', '在家讀書、思考或享受獨處時光']},
+            {id: 3, category: 'energy', question: '面對新環境時，您通常：', options: ['主動認識新朋友，快速融入群體', '觀察環境，慢慢適應後再與人交往']},
+            {id: 4, category: 'energy', question: '獲得靈感和動力的方式：', options: ['與他人討論交流，在互動中激發創意', '獨自思考，在安靜中整理思緒']},
+            {id: 5, category: 'energy', question: '處理壓力時，您偏好：', options: ['找人傾訴，通過交流釋放壓力', '獨處反思，通過內省解決問題']},
+            {id: 6, category: 'energy', question: '學習新技能時，您更願意：', options: ['參加團體課程，與同學互動學習', '自學或一對一指導，按自己節奏進展']},
             
             // 虚实之辨 (7-12)
-            {id: 7, category: 'sensing', question: '閱讀時，您更感興趣的是：', options: {A: '實用指南、技術手冊、具體案例', B: '哲學思辨、理論探討、抽象概念'}},
-            {id: 8, category: 'sensing', question: '制定計劃時，您習慣：', options: {A: '從具體步驟開始，逐步完善細節', B: '先構想整體藍圖，再填充具體內容'}},
-            {id: 9, category: 'sensing', question: '描述一件事物時，您傾向於：', options: {A: '詳細描述具體特徵和實際用途', B: '闡述其象徵意義和潛在可能性'}},
-            {id: 10, category: 'sensing', question: '面對問題時，您首先關注：', options: {A: '現有的事實資料和成功經驗', B: '創新的解決方案和未來可能'}},
-            {id: 11, category: 'sensing', question: '您更容易記住：', options: {A: '具體的數據、日期、人名、地點', B: '概念聯繫、整體印象、抽象關係'}},
-            {id: 12, category: 'sensing', question: '在項目中，您更重視：', options: {A: '實際可行性和操作細節', B: '創新突破和發展潛力'}},
+            {id: 7, category: 'sensing', question: '閱讀時，您更感興趣的是：', options: ['實用指南、技術手冊、具體案例', '哲學思辨、理論探討、抽象概念']},
+            {id: 8, category: 'sensing', question: '制定計劃時，您習慣：', options: ['從具體步驟開始，逐步完善細節', '先構想整體藍圖，再填充具體內容']},
+            {id: 9, category: 'sensing', question: '描述一件事物時，您傾向於：', options: ['詳細描述具體特徵和實際用途', '闡述其象徵意義和潛在可能性']},
+            {id: 10, category: 'sensing', question: '面對問題時，您首先關注：', options: ['現有的事實資料和成功經驗', '創新的解決方案和未來可能']},
+            {id: 11, category: 'sensing', question: '您更容易記住：', options: ['具體的數據、日期、人名、地點', '概念聯繫、整體印象、抽象關係']},
+            {id: 12, category: 'sensing', question: '在項目中，您更重視：', options: ['實際可行性和操作細節', '創新突破和發展潛力']},
             
             // 情理之衡 (13-18)
-            {id: 13, category: 'thinking', question: '評判一個決策時，您主要考慮：', options: {A: '邏輯是否合理，效率是否最優', B: '對相關人員的影響和感受'}},
-            {id: 14, category: 'thinking', question: '處理團隊衝突時，您優先：', options: {A: '分析事實，找出客觀的對錯', B: '理解各方感受，尋求和諧解決'}},
-            {id: 15, category: 'thinking', question: '給他人建議時，您傾向於：', options: {A: '客觀分析利弊，提供理性建議', B: '考慮對方處境，給予情感支持'}},
-            {id: 16, category: 'thinking', question: '面對不公平現象時，您更可能：', options: {A: '據理力爭，堅持原則和正義', B: '設身處地，理解各方立場'}},
-            {id: 17, category: 'thinking', question: '工作中，您更重視：', options: {A: '規則制度的公平執行', B: '人際關係的和諧維護'}},
-            {id: 18, category: 'thinking', question: '批評他人時，您會：', options: {A: '就事論事，直接指出問題所在', B: '考慮對方感受，委婉表達意見'}},
+            {id: 13, category: 'thinking', question: '評判一個決策時，您主要考慮：', options: ['邏輯是否合理，效率是否最優', '對相關人員的影響和感受']},
+            {id: 14, category: 'thinking', question: '處理團隊衝突時，您優先：', options: ['分析事實，找出客觀的對錯', '理解各方感受，尋求和諧解決']},
+            {id: 15, category: 'thinking', question: '給他人建議時，您傾向於：', options: ['客觀分析利弊，提供理性建議', '考慮對方處境，給予情感支持']},
+            {id: 16, category: 'thinking', question: '面對不公平現象時，您更可能：', options: ['據理力爭，堅持原則和正義', '設身處地，理解各方立場']},
+            {id: 17, category: 'thinking', question: '工作中，您更重視：', options: ['規則制度的公平執行', '人際關係的和諧維護']},
+            {id: 18, category: 'thinking', question: '批評他人時，您會：', options: ['就事論事，直接指出問題所在', '考慮對方感受，委婉表達意見']},
             
             // 顺变之策 (19-24)
-            {id: 19, category: 'judging', question: '您的工作習慣是：', options: {A: '制定詳細計劃，按部就班執行', B: '保持靈活彈性，隨時調整策略'}},
-            {id: 20, category: 'judging', question: '面對截止期限時，您通常：', options: {A: '提前安排，確保按時完成任務', B: '在壓力下衝刺，往往最後時刻完成'}},
-            {id: 21, category: 'judging', question: '旅行時，您偏好：', options: {A: '提前規劃行程，預訂酒店和景點', B: '隨興而走，享受未知的驚喜'}},
-            {id: 22, category: 'judging', question: '面對變化時，您：', options: {A: '希望有穩定的結構和明確指引', B: '享受變化帶來的新鮮感和挑戰'}},
-            {id: 23, category: 'judging', question: '整理物品時，您傾向於：', options: {A: '分類歸納，井然有序地擺放', B: '順手放置，實用性優於整齊'}},
-            {id: 24, category: 'judging', question: '做決定時，您更願意：', options: {A: '收集充分信息後，做出確定選擇', B: '保持開放心態，隨時修正決定'}}
+            {id: 19, category: 'judging', question: '您的工作習慣是：', options: ['制定詳細計劃，按部就班執行', '保持靈活彈性，隨時調整策略']},
+            {id: 20, category: 'judging', question: '面對截止期限時，您通常：', options: ['提前安排，確保按時完成任務', '在壓力下衝刺，往往最後時刻完成']},
+            {id: 21, category: 'judging', question: '旅行時，您偏好：', options: ['提前規劃行程，預訂酒店和景點', '隨興而走，享受未知的驚喜']},
+            {id: 22, category: 'judging', question: '面對變化時，您：', options: ['希望有穩定的結構和明確指引', '享受變化帶來的新鮮感和挑戰']},
+            {id: 23, category: 'judging', question: '整理物品時，您傾向於：', options: ['分類歸納，井然有序地擺放', '順手放置，實用性優於整齊']},
+            {id: 24, category: 'judging', question: '做決定時，您更願意：', options: ['收集充分信息後，做出確定選擇', '保持開放心態，隨時修正決定']}
         ];
 
         // 人格类型定义 - 优化数据结构
-        const personalityTypes = {
-            '靜實理順': {name: '尚書', character: '房玄齡', title: '貞觀賢相', description: '每軍國大事，皆與杜如晦參議', detail: '慎密如秋霜，忠勤似春蠶。房謀杜斷定天下，一代賢相輔明君。謹言慎行守正道，兢兢業業為蒼生。', category: '守護者', categoryDesc: '中流砥柱'},
-            '靜實理變': {name: '將作大匠', character: '魯班', title: '百工之聖', description: '班門弄斧', detail: '巧思天成造化功，神工鬼斧出其中。木石在手皆成器，匠心獨運傳古今。後世工師皆景仰，班門之前不敢言。', category: '藝術家', categoryDesc: '巧奪天工'},
-            '靜實情順': {name: '太醫', character: '孫思邈', title: '藥王', description: '人命至重，有貴千金，一方濟之，德逾於此', detail: '懸壺濟世醫者心，千金良方救眾生。慈眉善目勝菩薩，妙手回春賽華佗。德高如山仰止，仁深似海無涯。', category: '守護者', categoryDesc: '中流砥柱'},
-            '靜實情變': {name: '太樂令', character: '嵇康', title: '竹林名士', description: '目送歸鴻，手揮五弦', detail: '廣陵散盡音猶在，竹林深處隱高人。琴心劍膽俠士氣，詩情畫意文人魂。不羈如野鶴，清雅勝幽蘭。', category: '藝術家', categoryDesc: '巧奪天工'},
-            '靜虛理順': {name: '軍師', character: '諸葛亮', title: '臥龍先生', description: '鞠躬盡瘁，死而後已', detail: '羽扇綸巾，運籌帷幄。隆中一對，已定三分天下；七擒孟獲，盡顯智慧仁心。如秋月照古松，清輝映千古；似寒梅傲雪霜，孤標領群芳。', category: '理性者', categoryDesc: '智者無疆'},
-            '靜虛理變': {name: '欽天監', character: '張衡', title: '科聖', description: '君子不患位之不尊，而患德之不崇', detail: '渾天儀轉，測度乾坤；地動儀靈，預知震動。學問如海深，思辨若星辰。不慕榮華只求真，一心向學照後人。', category: '理性者', categoryDesc: '智者無疆'},
-            '靜虛情順': {name: '太傅', character: '孟子', title: '亞聖', description: '民為貴，社稷次之，君為輕', detail: '浩然正氣充宇宙，仁政理想照古今。性善之論啟民智，王道思想澤後世。如春風化雨潤無聲，似明燈照路指前程。', category: '理想主義者', categoryDesc: '德澤流芳'},
-            '靜虛情變': {name: '隱士', character: '陶淵明', title: '田園詩祖', description: '採菊東籬下，悠然見南山', detail: '不為五斗米折腰，歸來田園樂逍遙。晨興理荒穢，帶月荷鋤歸。真淳如赤子，清雅勝神仙。', category: '理想主義者', categoryDesc: '德澤流芳'},
-            '動實理順': {name: '廷尉', character: '包拯', title: '包青天', description: '關節不到，有閻羅包老', detail: '鐵面無私斷案明，青天白日照忠心。不畏權貴秉正義，只為蒼生伸冤情。清風兩袖朝天去，免得閭閻話短長。', category: '守護者', categoryDesc: '中流砥柱'},
-            '動實理變': {name: '行商', character: '呂不韋', title: '奇貨可居', description: '奇貨可居', detail: '商海縱橫識時務，政壇浮沉見機緣。一言九鼎定秦王，千金散盡購春秋。眼光如炬料先機，智謀如海深不測。', category: '藝術家', categoryDesc: '巧奪天工'},
-            '動實情順': {name: '太常', character: '司馬光', title: '文正公', description: '鑑於往事，有資於治道', detail: '溫文爾雅君子風，博古通今學者心。資治通鑑傳千古，溫良恭儉讓後人。如玉溫潤照人清，似蘭幽香滿室春。', category: '守護者', categoryDesc: '中流砥柱'},
-            '動實情變': {name: '名伶', character: '蔡文姬', title: '才女', description: '文姬才華，足可傳世', detail: '胡笳十八拍聲哀，異國飄零淚如雨。歸漢重逢舊山河，詩文并茂驚當世。才如江海波瀾闊，情似春花嬌豔新。', category: '藝術家', categoryDesc: '巧奪天工'},
-            '動虛理順': {name: '霸王', character: '唐太宗李世民', title: '千古一帝', description: '以銅為鏡，可以正衣冠；以古為鏡，可以知興替；以人為鏡，可以明得失', detail: '玄武門前定乾坤，貞觀之治澤蒼生。納諫如流成盛世，威加海內德如春。龍顏天縱英雄氣，萬國來朝仰聖明。', category: '理性者', categoryDesc: '智者無疆'},
-            '動虛理變': {name: '縱橫家', character: '蘇秦', title: '佩六國相印', description: '說趙王於華屋之下，抵掌而談', detail: '一舌敵萬軍，巧思破強秦。縱橫捭闔間，六國盡低頭。智如泉湧辯如河，談笑間已定江山。', category: '理性者', categoryDesc: '智者無疆'},
-            '動虛情順': {name: '大司徒', character: '范仲淹', title: '文正公', description: '先天下之憂而憂，後天下之樂而樂', detail: '岳陽樓上抒懷抱，憂樂與民共一心。教化如春雨，德澤似甘露。一片丹心照汗青，千載風範啟後人。', category: '理想主義者', categoryDesc: '德澤流芳'},
-            '動虛情變': {name: '遊俠', character: '李白', title: '詩仙', description: '安能摧眉折腰事權貴，使我不得開心顏', detail: '酒入豪腸，七分化作月光；餘下三分，嘯成劍氣。天子呼來不上船，自稱臣是酒中仙。飄逸若驚鴻，豪放如天馬。', category: '理想主義者', categoryDesc: '德澤流芳'}
-        };
+        const personalityTypes = new Map([
+            ['靜實理順', {name: '尚書', character: '房玄齡', title: '貞觀賢相', description: '每軍國大事，皆與杜如晦參議', detail: '慎密如秋霜，忠勤似春蠶。房謀杜斷定天下，一代賢相輔明君。謹言慎行守正道，兢兢業業為蒼生。', category: '守護者', categoryDesc: '中流砥柱'}],
+            ['靜實理變', {name: '將作大匠', character: '魯班', title: '百工之聖', description: '班門弄斧', detail: '巧思天成造化功，神工鬼斧出其中。木石在手皆成器，匠心獨運傳古今。後世工師皆景仰，班門之前不敢言。', category: '藝術家', categoryDesc: '巧奪天工'}],
+            ['靜實情順', {name: '太醫', character: '孫思邈', title: '藥王', description: '人命至重，有貴千金，一方濟之，德逾於此', detail: '懸壺濟世醫者心，千金良方救眾生。慈眉善目勝菩薩，妙手回春賽華佗。德高如山仰止，仁深似海無涯。', category: '守護者', categoryDesc: '中流砥柱'}],
+            ['靜實情變', {name: '太樂令', character: '嵇康', title: '竹林名士', description: '目送歸鴻，手揮五弦', detail: '廣陵散盡音猶在，竹林深處隱高人。琴心劍膽俠士氣，詩情畫意文人魂。不羈如野鶴，清雅勝幽蘭。', category: '藝術家', categoryDesc: '巧奪天工'}],
+            ['靜虛理順', {name: '軍師', character: '諸葛亮', title: '臥龍先生', description: '鞠躬盡瘁，死而後已', detail: '羽扇綸巾，運籌帷幄。隆中一對，已定三分天下；七擒孟獲，盡顯智慧仁心。如秋月照古松，清輝映千古；似寒梅傲雪霜，孤標領群芳。', category: '理性者', categoryDesc: '智者無疆'}],
+            ['靜虛理變', {name: '欽天監', character: '張衡', title: '科聖', description: '君子不患位之不尊，而患德之不崇', detail: '渾天儀轉，測度乾坤；地動儀靈，預知震動。學問如海深，思辨若星辰。不慕榮華只求真，一心向學照後人。', category: '理性者', categoryDesc: '智者無疆'}],
+            ['靜虛情順', {name: '太傅', character: '孟子', title: '亞聖', description: '民為貴，社稷次之，君為輕', detail: '浩然正氣充宇宙，仁政理想照古今。性善之論啟民智，王道思想澤後世。如春風化雨潤無聲，似明燈照路指前程。', category: '理想主義者', categoryDesc: '德澤流芳'}],
+            ['靜虛情變', {name: '隱士', character: '陶淵明', title: '田園詩祖', description: '採菊東籬下，悠然見南山', detail: '不為五斗米折腰，歸來田園樂逍遙。晨興理荒穢，帶月荷鋤歸。真淳如赤子，清雅勝神仙。', category: '理想主義者', categoryDesc: '德澤流芳'}],
+            ['動實理順', {name: '廷尉', character: '包拯', title: '包青天', description: '關節不到，有閻羅包老', detail: '鐵面無私斷案明，青天白日照忠心。不畏權貴秉正義，只為蒼生伸冤情。清風兩袖朝天去，免得閭閻話短長。', category: '守護者', categoryDesc: '中流砥柱'}],
+            ['動實理變', {name: '行商', character: '呂不韋', title: '奇貨可居', description: '奇貨可居', detail: '商海縱橫識時務，政壇浮沉見機緣。一言九鼎定秦王，千金散盡購春秋。眼光如炬料先機，智謀如海深不測。', category: '藝術家', categoryDesc: '巧奪天工'}],
+            ['動實情順', {name: '太常', character: '司馬光', title: '文正公', description: '鑑於往事，有資於治道', detail: '溫文爾雅君子風，博古通今學者心。資治通鑑傳千古，溫良恭儉讓後人。如玉溫潤照人清，似蘭幽香滿室春。', category: '守護者', categoryDesc: '中流砥柱'}],
+            ['動實情變', {name: '名伶', character: '蔡文姬', title: '才女', description: '文姬才華，足可傳世', detail: '胡笳十八拍聲哀，異國飄零淚如雨。歸漢重逢舊山河，詩文并茂驚當世。才如江海波瀾闊，情似春花嬌豔新。', category: '藝術家', categoryDesc: '巧奪天工'}],
+            ['動虛理順', {name: '霸王', character: '唐太宗李世民', title: '千古一帝', description: '以銅為鏡，可以正衣冠；以古為鏡，可以知興替；以人為鏡，可以明得失', detail: '玄武門前定乾坤，貞觀之治澤蒼生。納諫如流成盛世，威加海內德如春。龍顏天縱英雄氣，萬國來朝仰聖明。', category: '理性者', categoryDesc: '智者無疆'}],
+            ['動虛理變', {name: '縱橫家', character: '蘇秦', title: '佩六國相印', description: '說趙王於華屋之下，抵掌而談', detail: '一舌敵萬軍，巧思破強秦。縱橫捭闔間，六國盡低頭。智如泉湧辯如河，談笑間已定江山。', category: '理性者', categoryDesc: '智者無疆'}],
+            ['動虛情順', {name: '大司徒', character: '范仲淹', title: '文正公', description: '先天下之憂而憂，後天下之樂而樂', detail: '岳陽樓上抒懷抱，憂樂與民共一心。教化如春雨，德澤似甘露。一片丹心照汗青，千載風範啟後人。', category: '理想主義者', categoryDesc: '德澤流芳'}],
+            ['動虛情變', {name: '遊俠', character: '李白', title: '詩仙', description: '安能摧眉折腰事權貴，使我不得開心顏', detail: '酒入豪腸，七分化作月光；餘下三分，嘯成劍氣。天子呼來不上船，自稱臣是酒中仙。飄逸若驚鴻，豪放如天馬。', category: '理想主義者', categoryDesc: '德澤流芳'}]
+        ]);
 
         // 全局变量 - 性能优化
         let currentQuestionIndex = 0;
-        let answers = {};
-        const dimensionNames = {
-            energy: '動靜之道',
-            sensing: '虛實之辨',
-            thinking: '情理之衡',
-            judging: '順變之策'
-        };
-
+        let answers = new Map(); // 使用 Map 提高性能
+        
+        // 缓存DOM元素
+        const elements = {};
+        
         // 防抖函数
-        function debounce(func, wait) {
+        const debounce = (func, wait) => {
             let timeout;
             return function executedFunction(...args) {
                 const later = () => {
@@ -711,94 +746,137 @@
                 clearTimeout(timeout);
                 timeout = setTimeout(later, wait);
             };
-        }
+        };
 
         // 缓存DOM元素
-        const elements = {};
         function cacheElements() {
-            elements.startScreen = document.getElementById('startScreen');
-            elements.testContainer = document.getElementById('testContainer');
-            elements.resultContainer = document.getElementById('resultContainer');
-            elements.currentQuestion = document.getElementById('currentQuestion');
-            elements.progressFill = document.getElementById('progressFill');
-            elements.questionCounter = document.getElementById('questionCounter');
-            elements.prevBtn = document.getElementById('prevBtn');
-            elements.nextBtn = document.getElementById('nextBtn');
-            elements.personalityType = document.getElementById('personalityType');
-            elements.scores = document.getElementById('scores');
+            const ids = ['startScreen', 'testContainer', 'resultContainer', 'currentQuestion', 
+                        'progressFill', 'questionCounter', 'prevBtn', 'nextBtn', 
+                        'personalityType', 'scores', 'startBtn'];
+            
+            ids.forEach(id => {
+                elements[id] = document.getElementById(id);
+            });
         }
 
-        // 启动测试
+        // 启动测试 - 优化版本
         function startTest() {
             elements.startScreen.style.display = 'none';
             elements.testContainer.classList.add('active');
+            elements.startBtn.style.display = 'none';
             showQuestion(0);
         }
 
-        // 显示问题 - 优化版本
+        // 显示问题 - 大幅优化版本
         function showQuestion(index) {
             const question = questions[index];
             
-            // 使用模板字符串提高性能
-            const questionHTML = `
-                <div class="question fade-in">
-                    <h3>${question.id}. ${question.question}</h3>
-                    <div class="options">
-                        <div class="option" data-value="A" onclick="selectOption(${index}, 'A')">
-                            <input type="radio" name="q${question.id}" value="A" id="q${question.id}a">
-                            <label for="q${question.id}a"><strong>A.</strong> ${question.options.A}</label>
-                        </div>
-                        <div class="option" data-value="B" onclick="selectOption(${index}, 'B')">
-                            <input type="radio" name="q${question.id}" value="B" id="q${question.id}b">
-                            <label for="q${question.id}b"><strong>B.</strong> ${question.options.B}</label>
-                        </div>
+            // 使用文档片段提高性能
+            const fragment = document.createDocumentFragment();
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question fade-in';
+            
+            // 一次性构建HTML
+            questionDiv.innerHTML = `
+                <h3>${question.id}. ${question.question}</h3>
+                <div class="options">
+                    <div class="option" data-value="0" data-question="${index}">
+                        <input type="radio" name="q${question.id}" value="0" id="q${question.id}a">
+                        <label for="q${question.id}a"><strong>A.</strong> ${question.options[0]}</label>
+                    </div>
+                    <div class="option" data-value="1" data-question="${index}">
+                        <input type="radio" name="q${question.id}" value="1" id="q${question.id}b">
+                        <label for="q${question.id}b"><strong>B.</strong> ${question.options[1]}</label>
                     </div>
                 </div>
             `;
             
-            elements.currentQuestion.innerHTML = questionHTML;
-
-            // 批量更新UI
+            fragment.appendChild(questionDiv);
+            
+            // 批量DOM更新
             requestAnimationFrame(() => {
-                const progress = ((index + 1) / questions.length) * 100;
-                elements.progressFill.style.width = progress + '%';
-                elements.questionCounter.textContent = `${index + 1} / ${questions.length}`;
+                elements.currentQuestion.replaceChildren(fragment);
                 
-                elements.prevBtn.disabled = index === 0;
-                elements.nextBtn.disabled = !answers[question.id];
-                elements.nextBtn.textContent = index === questions.length - 1 ? '查看結果' : '下一題';
-
+                // 添加事件监听 - 使用事件委托提高性能
+                elements.currentQuestion.addEventListener('click', handleOptionClick, { once: false });
+                
+                // 批量更新UI状态
+                updateQuestionUI(index, question);
+                
                 // 恢复之前的选择
-                if (answers[question.id]) {
-                    const selectedOption = elements.currentQuestion.querySelector(`[data-value="${answers[question.id]}"]`);
-                    if (selectedOption) {
-                        selectedOption.classList.add('selected');
-                        selectedOption.querySelector('input').checked = true;
-                    }
-                }
+                restorePreviousSelection(question);
             });
         }
 
-        // 选择选项 - 优化版本
-        function selectOption(questionIndex, option) {
+        // 处理选项点击 - 使用事件委托
+        function handleOptionClick(e) {
+            const option = e.target.closest('.option');
+            if (!option) return;
+            
+            const questionIndex = parseInt(option.dataset.question);
+            const optionValue = parseInt(option.dataset.value);
+            
+            selectOption(questionIndex, optionValue);
+        }
+
+        // 更新问题UI状态
+        function updateQuestionUI(index, question) {
+            const progress = ((index + 1) / questions.length) * 100;
+            elements.progressFill.style.width = progress + '%';
+            elements.questionCounter.textContent = `${index + 1} / ${questions.length}`;
+            
+            elements.prevBtn.disabled = index === 0;
+            elements.nextBtn.disabled = !answers.has(question.id);
+            elements.nextBtn.textContent = index === questions.length - 1 ? '查看結果' : '下一題';
+        }
+
+        // 恢复之前的选择
+        function restorePreviousSelection(question) {
+            if (answers.has(question.id)) {
+                const selectedValue = answers.get(question.id);
+                const selectedOption = elements.currentQuestion.querySelector(`[data-value="${selectedValue}"]`);
+                if (selectedOption) {
+                    selectedOption.classList.add('selected');
+                    selectedOption.querySelector('input').checked = true;
+                }
+            }
+        }
+
+        // 选择选项 - 大幅优化版本
+        function selectOption(questionIndex, optionValue) {
             const question = questions[questionIndex];
-            answers[question.id] = option;
+            answers.set(question.id, optionValue);
 
             // 批量更新视觉效果
             requestAnimationFrame(() => {
                 const options = elements.currentQuestion.querySelectorAll('.option');
                 options.forEach(opt => opt.classList.remove('selected'));
                 
-                const selectedOption = elements.currentQuestion.querySelector(`[data-value="${option}"]`);
-                selectedOption.classList.add('selected');
-                selectedOption.querySelector('input').checked = true;
+                const selectedOption = elements.currentQuestion.querySelector(`[data-value="${optionValue}"]`);
+                if (selectedOption) {
+                    selectedOption.classList.add('selected');
+                    selectedOption.querySelector('input').checked = true;
+                }
                 
                 elements.nextBtn.disabled = false;
             });
 
-            // 保存进度
-            saveProgress();
+            // 保存进度（防抖处理）
+            debouncedSaveProgress();
         }
+
+        // 防抖的保存进度函数
+        const debouncedSaveProgress = debounce(() => {
+            try {
+                const progressData = {
+                    currentQuestionIndex,
+                    answers: Object.fromEntries(answers)
+                };
+                localStorage.setItem('testProgress', JSON.stringify(progressData));
+            } catch (e) {
+                console.warn('无法保存进度:', e);
+            }
+        }, DEBOUNCE_DELAY);
 
         // 下一题
         function nextQuestion() {
@@ -818,35 +896,37 @@
             }
         }
 
-        // 计算结果 - 优化版本
+        // 计算结果 - 大幅优化版本
         function calculateResult() {
             const scores = {
-                energy: { A: 0, B: 0 },
-                sensing: { A: 0, B: 0 },
-                thinking: { A: 0, B: 0 },
-                judging: { A: 0, B: 0 }
+                energy: [0, 0],
+                sensing: [0, 0],
+                thinking: [0, 0],
+                judging: [0, 0]
             };
 
-            // 批量计算得分
-            for (const question of questions) {
-                const answer = answers[question.id];
-                if (answer) {
+            // 使用 forEach 提高性能
+            questions.forEach(question => {
+                if (answers.has(question.id)) {
+                    const answer = answers.get(question.id);
                     scores[question.category][answer]++;
                 }
-            }
+            });
 
             // 确定人格类型
-            const energyType = scores.energy.A >= scores.energy.B ? '動' : '靜';
-            const sensingType = scores.sensing.A >= scores.sensing.B ? '實' : '虛';
-            const thinkingType = scores.thinking.A >= scores.thinking.B ? '理' : '情';
-            const judgingType = scores.judging.A >= scores.judging.B ? '順' : '變';
+            const types = [
+                scores.energy[0] >= scores.energy[1] ? '動' : '靜',
+                scores.sensing[0] >= scores.sensing[1] ? '實' : '虛',
+                scores.thinking[0] >= scores.thinking[1] ? '理' : '情',
+                scores.judging[0] >= scores.judging[1] ? '順' : '變'
+            ];
 
-            const personalityKey = energyType + sensingType + thinkingType + judgingType;
+            const personalityKey = types.join('');
 
             return {
                 type: personalityKey,
                 scores: scores,
-                details: personalityTypes[personalityKey]
+                details: personalityTypes.get(personalityKey)
             };
         }
 
@@ -854,6 +934,7 @@
         function showResult() {
             showLoading();
             
+            // 使用 setTimeout 避免阻塞UI
             setTimeout(() => {
                 const result = calculateResult();
                 
@@ -862,80 +943,93 @@
                 
                 const typeInfo = result.details;
                 
-                // 使用文档片段提高性能
-                const personalityHTML = `
-                    <div style="text-align: center; margin: 30px 0;" class="fade-in">
-                        <div style="font-size: 0.9em; color: var(--warm-gold); margin-bottom: 10px;">${typeInfo.category}</div>
-                        <div style="font-size: 0.7em; color: var(--moon-white); margin-bottom: 15px;">${typeInfo.categoryDesc}</div>
-                        <div style="font-size: 2.2em; color: var(--warm-gold); margin: 15px 0; font-family: 'KaiTi', serif; font-weight: 700;">${typeInfo.name}</div>
-                        <div style="font-size: 1.2em; color: var(--text-light); margin: 10px 0; font-family: 'KaiTi', serif;">${typeInfo.character} <span style="color: var(--golden-orange);">·</span> ${typeInfo.title}</div>
-                        <div style="font-size: 1em; color: var(--moon-white); font-style: italic; margin: 20px auto; max-width: 600px; padding: 18px; background: linear-gradient(135deg, rgba(31,58,58,0.8), rgba(45,85,85,0.7)); border-radius: 12px; border-left: 4px solid var(--golden-orange); box-shadow: 0 5px 15px rgba(31,58,58,0.3);">
-                            「${typeInfo.description}」
-                        </div>
-                        <div style="font-size: 1.1em; color: var(--text-light); line-height: 1.6; margin: 25px auto; max-width: 700px; padding: 25px; background: linear-gradient(145deg, rgba(31,58,58,0.8), rgba(45,85,85,0.9)); border-radius: 15px; border: 2px solid var(--jade-green); font-family: 'KaiTi', serif; box-shadow: 0 8px 25px rgba(31,58,58,0.4);">
-                            ${typeInfo.detail}
-                        </div>
-                    </div>
-                `;
-                
+                // 优化的结果HTML生成
+                const personalityHTML = createPersonalityHTML(typeInfo);
                 elements.personalityType.innerHTML = personalityHTML;
 
                 // 显示各维度得分
-                const labels = {
-                    energy: { A: '動者(陽)', B: '靜者(陰)' },
-                    sensing: { A: '實者(務實)', B: '虛者(務虛)' },
-                    thinking: { A: '理者(尚理)', B: '情者(尚情)' },
-                    judging: { A: '順者(守序)', B: '變者(應變)' }
-                };
-
-                const scoresHTML = Object.keys(result.scores).map(dimension => {
-                    const scoreA = result.scores[dimension].A;
-                    const scoreB = result.scores[dimension].B;
-                    const total = scoreA + scoreB;
-                    const dominantScore = Math.max(scoreA, scoreB);
-                    const percentage = (dominantScore / total) * 100;
-                    const dominantType = scoreA >= scoreB ? 'A' : 'B';
-
-                    return `
-                        <div class="score-item fade-in">
-                            <h4 style="color: var(--warm-gold); font-family: 'KaiTi', serif; font-weight: 600; margin-bottom: 15px;">${dimensionNames[dimension]}</h4>
-                            <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 10px;">
-                                <span style="color: var(--moon-white);">${labels[dimension].A}: ${scoreA}</span>
-                                <span style="color: var(--moon-white);">${labels[dimension].B}: ${scoreB}</span>
-                            </div>
-                            <div class="score-bar">
-                                <div class="score-fill" style="width: ${percentage}%;"></div>
-                            </div>
-                            <div style="text-align: center; font-weight: 600; color: var(--golden-orange); margin-top: 10px; font-family: 'KaiTi', serif;">
-                                ${labels[dimension][dominantType]}
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-
+                const scoresHTML = createScoresHTML(result);
                 elements.scores.innerHTML = scoresHTML;
 
-                // 动画效果
-                setTimeout(() => {
-                    document.querySelectorAll('.score-fill').forEach(fill => {
-                        const width = fill.style.width;
-                        fill.style.width = '0%';
-                        requestAnimationFrame(() => {
-                            fill.style.width = width;
-                        });
-                    });
-                }, 100);
+                // 延迟动画效果
+                setTimeout(() => animateScoreBars(), 100);
 
                 removeLoading();
-            }, 2000);
+            }, 1500); // 减少加载时间
+        }
+
+        // 创建人格类型HTML
+        function createPersonalityHTML(typeInfo) {
+            return `
+                <div style="text-align: center; margin: 30px 0;" class="fade-in">
+                    <div style="font-size: 0.9em; color: var(--warm-gold); margin-bottom: 10px;">${typeInfo.category}</div>
+                    <div style="font-size: 0.7em; color: var(--moon-white); margin-bottom: 15px;">${typeInfo.categoryDesc}</div>
+                    <div style="font-size: 2.2em; color: var(--warm-gold); margin: 15px 0; font-family: 'KaiTi', serif; font-weight: 700;">${typeInfo.name}</div>
+                    <div style="font-size: 1.2em; color: var(--text-light); margin: 10px 0; font-family: 'KaiTi', serif;">${typeInfo.character} <span style="color: var(--golden-orange);">·</span> ${typeInfo.title}</div>
+                    <div style="font-size: 1em; color: var(--moon-white); font-style: italic; margin: 20px auto; max-width: 600px; padding: 18px; background: linear-gradient(135deg, rgba(31,58,58,0.8), rgba(45,85,85,0.7)); border-radius: 12px; border-left: 4px solid var(--golden-orange); box-shadow: 0 5px 15px rgba(31,58,58,0.3);">
+                        「${typeInfo.description}」
+                    </div>
+                    <div style="font-size: 1.1em; color: var(--text-light); line-height: 1.6; margin: 25px auto; max-width: 700px; padding: 25px; background: linear-gradient(145deg, rgba(31,58,58,0.8), rgba(45,85,85,0.9)); border-radius: 15px; border: 2px solid var(--jade-green); font-family: 'KaiTi', serif; box-shadow: 0 8px 25px rgba(31,58,58,0.4);">
+                        ${typeInfo.detail}
+                    </div>
+                </div>
+            `;
+        }
+
+        // 创建分数HTML
+        function createScoresHTML(result) {
+            const labels = new Map([
+                ['energy', ['動者(陽)', '靜者(陰)']],
+                ['sensing', ['實者(務實)', '虛者(務虛)']],
+                ['thinking', ['理者(尚理)', '情者(尚情)']],
+                ['judging', ['順者(守序)', '變者(應變)']]
+            ]);
+
+            return Array.from(dimensionNames.entries()).map(([dimension, name]) => {
+                const [scoreA, scoreB] = result.scores[dimension];
+                const total = scoreA + scoreB;
+                const dominantScore = Math.max(scoreA, scoreB);
+                const percentage = total > 0 ? (dominantScore / total) * 100 : 0;
+                const dominantIndex = scoreA >= scoreB ? 0 : 1;
+                const dimensionLabels = labels.get(dimension);
+
+                return `
+                    <div class="score-item fade-in">
+                        <h4 style="color: var(--warm-gold); font-family: 'KaiTi', serif; font-weight: 600; margin-bottom: 15px;">${name}</h4>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9em; margin-bottom: 10px;">
+                            <span style="color: var(--moon-white);">${dimensionLabels[0]}: ${scoreA}</span>
+                            <span style="color: var(--moon-white);">${dimensionLabels[1]}: ${scoreB}</span>
+                        </div>
+                        <div class="score-bar">
+                            <div class="score-fill" data-width="${percentage}"></div>
+                        </div>
+                        <div style="text-align: center; font-weight: 600; color: var(--golden-orange); margin-top: 10px; font-family: 'KaiTi', serif;">
+                            ${dimensionLabels[dominantIndex]}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 动画分数条
+        function animateScoreBars() {
+            const scoreFills = document.querySelectorAll('.score-fill');
+            scoreFills.forEach(fill => {
+                const targetWidth = fill.dataset.width + '%';
+                fill.style.width = '0%';
+                requestAnimationFrame(() => {
+                    fill.style.width = targetWidth;
+                });
+            });
         }
 
         // 重新开始测试
         function restartTest() {
             currentQuestionIndex = 0;
-            answers = {};
+            answers.clear();
             elements.resultContainer.classList.remove('active');
             elements.startScreen.style.display = 'block';
+            elements.startBtn.style.display = 'inline-block';
             elements.progressFill.style.width = '0%';
             localStorage.removeItem('testProgress');
         }
@@ -960,9 +1054,18 @@ ${typeInfo.detail}
                     title: '人格測評結果',
                     text: shareText,
                     url: window.location.href
-                });
+                }).catch(err => console.log('分享失败:', err));
             } else {
                 navigator.clipboard.writeText(shareText).then(() => {
+                    showEncouragement('結果已複製到剪貼板！');
+                }).catch(() => {
+                    // 备用方案
+                    const textArea = document.createElement('textarea');
+                    textArea.value = shareText;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
                     showEncouragement('結果已複製到剪貼板！');
                 });
             }
@@ -994,37 +1097,20 @@ ${typeInfo.detail}
             }
         }
 
-        // 显示鼓励文字
-        const encouragementTexts = [
-            "很好！繼續探索您的內心世界",
-            "每個選擇都反映著您獨特的個性",
-            "您正在更深入地了解自己",
-            "優秀！您的人格特質正在展現",
-            "真實的選擇最能反映真實的您"
-        ];
-
-        function showEncouragement(customText = null) {
-            const text = customText || encouragementTexts[Math.floor(Math.random() * encouragementTexts.length)];
+        // 显示鼓励文字 - 仅用于分享成功提示
+        function showEncouragement(customText) {
+            if (!customText) return; // 只显示自定义文字
+            
             const encouragement = document.createElement('div');
             encouragement.className = 'encouragement';
-            encouragement.textContent = text;
+            encouragement.textContent = customText;
             document.body.appendChild(encouragement);
 
             setTimeout(() => {
-                encouragement.remove();
+                if (encouragement.parentNode) {
+                    encouragement.remove();
+                }
             }, 2000);
-        }
-
-        // 保存进度
-        function saveProgress() {
-            try {
-                localStorage.setItem('testProgress', JSON.stringify({
-                    currentQuestionIndex: currentQuestionIndex,
-                    answers: answers
-                }));
-            } catch (e) {
-                console.warn('无法保存进度:', e);
-            }
         }
 
         // 加载进度
@@ -1033,8 +1119,8 @@ ${typeInfo.detail}
                 const saved = localStorage.getItem('testProgress');
                 if (saved) {
                     const progress = JSON.parse(saved);
-                    currentQuestionIndex = progress.currentQuestionIndex;
-                    answers = progress.answers;
+                    currentQuestionIndex = progress.currentQuestionIndex || 0;
+                    answers = new Map(Object.entries(progress.answers || {}));
                     return true;
                 }
             } catch (e) {
@@ -1043,35 +1129,74 @@ ${typeInfo.detail}
             return false;
         }
 
-        // 键盘支持
+        // 键盘支持 - 优化版本
         function handleKeyboard(e) {
-            if (elements.testContainer.classList.contains('active')) {
-                switch(e.key.toLowerCase()) {
-                    case 'a':
-                        selectOption(currentQuestionIndex, 'A');
-                        break;
-                    case 'b':
-                        selectOption(currentQuestionIndex, 'B');
-                        break;
-                    case 'arrowright':
-                        if (!elements.nextBtn.disabled) nextQuestion();
-                        break;
-                    case 'arrowleft':
-                        if (!elements.prevBtn.disabled) previousQuestion();
-                        break;
-                }
+            if (!elements.testContainer.classList.contains('active')) return;
+            
+            const key = e.key.toLowerCase();
+            
+            switch(key) {
+                case 'a':
+                    e.preventDefault();
+                    selectOption(currentQuestionIndex, 0);
+                    break;
+                case 'b':
+                    e.preventDefault();
+                    selectOption(currentQuestionIndex, 1);
+                    break;
+                case 'arrowright':
+                    e.preventDefault();
+                    if (!elements.nextBtn.disabled) nextQuestion();
+                    break;
+                case 'arrowleft':
+                    e.preventDefault();
+                    if (!elements.prevBtn.disabled) previousQuestion();
+                    break;
+                case 'enter':
+                    e.preventDefault();
+                    if (!elements.nextBtn.disabled) nextQuestion();
+                    break;
             }
         }
 
-        // 初始化应用
+        // 触摸支持
+        function initTouchSupport() {
+            let touchStartX = 0;
+            let touchStartY = 0;
+            
+            document.addEventListener('touchstart', e => {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }, { passive: true });
+
+            document.addEventListener('touchend', e => {
+                if (!elements.testContainer.classList.contains('active')) return;
+                
+                const touchEndX = e.changedTouches[0].clientX;
+                const touchEndY = e.changedTouches[0].clientY;
+                const diffX = touchStartX - touchEndX;
+                const diffY = Math.abs(touchStartY - touchEndY);
+                
+                // 只有水平滑动且距离足够时才触发
+                if (Math.abs(diffX) > 50 && diffY < 100) {
+                    if (diffX > 0 && !elements.nextBtn.disabled) {
+                        nextQuestion();
+                    } else if (diffX < 0 && !elements.prevBtn.disabled) {
+                        previousQuestion();
+                    }
+                }
+            }, { passive: true });
+        }
+
+        // 初始化应用 - 优化版本
         function initApp() {
             cacheElements();
+            initTouchSupport();
 
             // 检查保存的进度
             if (loadProgress() && currentQuestionIndex > 0) {
                 if (confirm('檢測到未完成的測評，是否繼續？')) {
-                    elements.startScreen.style.display = 'none';
-                    elements.testContainer.classList.add('active');
+                    startTest();
                     showQuestion(currentQuestionIndex);
                 }
             }
@@ -1079,36 +1204,25 @@ ${typeInfo.detail}
             // 绑定键盘事件
             document.addEventListener('keydown', handleKeyboard);
 
-            // 添加触摸支持
-            let touchStartX = 0;
-            document.addEventListener('touchstart', e => {
-                touchStartX = e.touches[0].clientX;
-            });
-
-            document.addEventListener('touchend', e => {
-                const touchEndX = e.changedTouches[0].clientX;
-                const diff = touchStartX - touchEndX;
-                
-                if (Math.abs(diff) > 50 && elements.testContainer.classList.contains('active')) {
-                    if (diff > 0 && !elements.nextBtn.disabled) {
-                        nextQuestion();
-                    } else if (diff < 0 && !elements.prevBtn.disabled) {
-                        previousQuestion();
-                    }
-                }
-            });
-
             // 性能监控
             if ('performance' in window) {
                 window.addEventListener('load', () => {
                     const perfData = performance.getEntriesByType('navigation')[0];
-                    console.log(`頁面加載時間: ${perfData.loadEventEnd - perfData.loadEventStart}ms`);
+                    if (perfData) {
+                        console.log(`頁面加載時間: ${Math.round(perfData.loadEventEnd - perfData.loadEventStart)}ms`);
+                    }
                 });
             }
+
+            console.log('古典人格測評系統已初始化 - 優化版本');
         }
 
         // 当DOM加载完成时初始化
-        document.addEventListener('DOMContentLoaded', initApp);
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
 
     </script>
 </body>
