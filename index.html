@@ -1189,33 +1189,37 @@ ${typeInfo.detail}
         }
 
         // 初始化应用 - 优化版本
-        function initApp() {
-            cacheElements();
-            initTouchSupport();
+// 初始化應用 - 優化版本
+function initApp() {
+    // 清除之前的測評進度
+    localStorage.removeItem('testProgress');
 
-            // 检查保存的进度
-            if (loadProgress() && currentQuestionIndex > 0) {
-                if (confirm('檢測到未完成的測評，是否繼續？')) {
-                    startTest();
-                    showQuestion(currentQuestionIndex);
-                }
-            }
+    cacheElements();
+    initTouchSupport();
 
-            // 绑定键盘事件
-            document.addEventListener('keydown', handleKeyboard);
-
-            // 性能监控
-            if ('performance' in window) {
-                window.addEventListener('load', () => {
-                    const perfData = performance.getEntriesByType('navigation')[0];
-                    if (perfData) {
-                        console.log(`頁面加載時間: ${Math.round(perfData.loadEventEnd - perfData.loadEventStart)}ms`);
-                    }
-                });
-            }
-
-            console.log('古典人格測評系統已初始化 - 優化版本');
+    // 檢查保存的進度（由於已清除，這部分將不會載入任何進度）
+    if (loadProgress() && currentQuestionIndex > 0) {
+        if (confirm('檢測到未完成的測評，是否繼續？')) {
+            startTest();
+            showQuestion(currentQuestionIndex);
         }
+    }
+
+    // 綁定鍵盤事件
+    document.addEventListener('keydown', handleKeyboard);
+
+    // 性能監控
+    if ('performance' in window) {
+        window.addEventListener('load', () => {
+            const perfData = performance.getEntriesByType('navigation')[0];
+            if (perfData) {
+                console.log(`頁面加載時間: ${Math.round(perfData.loadEventEnd - perfData.loadEventStart)}ms`);
+            }
+        });
+    }
+
+    console.log('古典人格測評系統已初始化 - 優化版本');
+}
 
         // 当DOM加载完成时初始化
         if (document.readyState === 'loading') {
